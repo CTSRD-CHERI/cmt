@@ -1,0 +1,217 @@
+/*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
+ * Copyright (c) 2019 Edward Tomasz Napierala <trasz@FreeBSD.org>
+ * All rights reserved.
+ *
+ * This software was developed by SRI International and the University of
+ * Cambridge Computer Laboratory under DARPA/AFRL contract (FA8750-10-C-0237)
+ * ("CTSRD"), as part of the DARPA CRASH research programme.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+ /*
+  * The purpose of this thing is to replay compact memory traces,
+  * generated using trace2cmt.
+  *
+  * Use the -v flag to see what it's doing.
+  */
+
+#include <err.h>
+#include <map>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+static bool vflag = false;
+static std::map<int, intptr_t> tag2ptr;
+
+static void
+usage(void)
+{
+
+	fprintf(stderr, "usage: %s [-v] input-path\n", getprogname());
+	exit(1);
+}
+
+static long long
+parse_x(FILE *infp)
+{
+	size_t ret;
+	long long x;
+	unsigned char b;
+
+	ret = fread(&b, 1, 1, infp);
+	if (ret != 1) {
+		if (feof(infp))
+			return (-1);
+		err(1, "fread");
+	}
+
+	x = (b & 0x7f);
+	if (b & 0x80)
+		return (x);
+
+	ret = fread(&b, 1, 1, infp);
+	if (ret != 1)
+		err(1, "fread");
+
+	x |= ((b & 0x7f) << 7);
+	if (b & 0x80)
+		return (x);
+
+	ret = fread(&b, 1, 1, infp);
+	if (ret != 1)
+		err(1, "fread");
+
+	x |= ((b & 0x7f) << 14);
+	if (b & 0x80)
+		return (x);
+
+	ret = fread(&b, 1, 1, infp);
+	if (ret != 1)
+		err(1, "fread");
+
+	x |= ((b & 0x7f) << 21);
+	if (b & 0x80)
+		return (x);
+
+	errx(1, "cmt stream error: unterminated x");
+}
+
+static void
+tag_alloc(int newtag, intptr_t newptr)
+{
+
+	auto inserted = tag2ptr.insert(std::make_pair(newtag, newptr));
+	if (inserted.second == false)
+		errx(1, "already have tag %d as ptr %lx", newtag, newptr);
+}
+
+static intptr_t
+tag_free(int oldtag)
+{
+	intptr_t oldptr;
+
+	auto oldpair = tag2ptr.find(oldtag);
+	if (oldpair == tag2ptr.end())
+		errx(1, "no ptr for %d", oldtag);
+	oldptr = oldpair->second;
+	tag2ptr.erase(oldpair);
+
+	return (oldptr);
+}
+	
+static void
+replay(FILE *infp)
+{
+	intptr_t newptr, oldptr;
+	static int oldnewtag = 0;
+	int newtag, oldtag, size;
+
+	for (;;) {
+		size = parse_x(infp);
+		if (feof(infp))
+			return;
+		oldtag = parse_x(infp);
+		newtag = parse_x(infp);
+
+		if (oldtag != 0) {
+			if (oldtag >= oldnewtag)
+				errx(1, "cmt stream error: oldtag >= oldnewtag");
+			oldtag = (oldnewtag + 1) - oldtag;
+		}
+
+		if (newtag != 0) {
+			newtag += oldnewtag;
+			oldnewtag = newtag;
+		}
+
+		if (newtag != 0) {
+			if (oldtag != 0) {
+				if (vflag)
+					printf("realloc(<%d>, %d) = <%d>\n", oldtag, size, newtag);
+
+				if (size == 0)
+					errx(1, "cmt stream error: size == 0");
+
+				oldptr = tag_free(oldtag);
+				newptr = (intptr_t)realloc((void *)oldptr, size);
+				tag_alloc(newtag, newptr);
+			} else {
+				if (vflag)
+					printf("malloc(%d) = <%d>\n", size, newtag);
+
+				if (size == 0)
+					errx(1, "cmt stream error: size == 0");
+
+				newptr = (intptr_t)malloc(size);
+				tag_alloc(newtag, newptr);
+			}
+		} else {
+			if (vflag)
+				printf("free(<%d>)\n", oldtag);
+
+			if (size != 0)
+				errx(1, "cmt stream error: size != 0");
+
+			oldptr = tag_free(oldtag);
+			free((void *)oldptr);
+		}
+	}
+}
+
+int
+main(int argc, char **argv)
+{
+	FILE *infp;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "v")) != -1) {
+		switch (ch) {
+		case 'v':
+			vflag = true;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	infp = fopen(argv[0], "r");
+	if (infp == NULL)
+		err(1, "%s", argv[0]);
+
+	replay(infp);
+
+	return (0);
+}
