@@ -158,34 +158,34 @@ replay(FILE *infp)
 
 		if (newtag != 0) {
 			if (oldtag != 0) {
-				if (vflag)
-					printf("realloc(<%d>, %d) = <%d>\n", oldtag, size, newtag);
-
 				if (size == 0)
 					errx(1, "cmt stream error: size == 0");
 
 				oldptr = tag_free(oldtag);
 				newptr = (intptr_t)realloc((void *)oldptr, size);
 				tag_alloc(newtag, newptr);
-			} else {
-				if (vflag)
-					printf("malloc(%d) = <%d>\n", size, newtag);
 
+				if (vflag)
+					printf("realloc(%lx<%d>, %d) = %lx<%d>\n", oldptr, oldtag, size, newptr, newtag);
+			} else {
 				if (size == 0)
 					errx(1, "cmt stream error: size == 0");
 
 				newptr = (intptr_t)malloc(size);
 				tag_alloc(newtag, newptr);
+
+				if (vflag)
+					printf("malloc(%d) = %lx<%d>\n", size, newptr, newtag);
 			}
 		} else {
-			if (vflag)
-				printf("free(<%d>)\n", oldtag);
-
 			if (size != 0)
 				errx(1, "cmt stream error: size != 0");
 
 			oldptr = tag_free(oldtag);
 			free((void *)oldptr);
+
+			if (vflag)
+				printf("free(%lx<%d>)\n", oldptr, oldtag);
 		}
 	}
 }
