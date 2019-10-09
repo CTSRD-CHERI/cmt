@@ -1,3 +1,5 @@
+CFLAGS+=	-Wall
+
 default: all
 
 all: trace2cmt cmtreplay
