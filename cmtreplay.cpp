@@ -136,8 +136,13 @@ replay(FILE *infp)
 		size = parse_x(infp);
 		if (feof(infp))
 			return;
+
 		oldtag = parse_x(infp);
-		newtag = parse_x(infp);
+
+		if (size != 0)
+			newtag = parse_x(infp);
+		else
+			newtag = 0;
 
 		if (oldtag != 0) {
 			if (oldtag >= oldnewtag)

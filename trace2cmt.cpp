@@ -103,11 +103,13 @@ emit(FILE *outfp, int oldtag, size_t size, int newtag)
 		emit_x(outfp, (oldnewtag + 1) - oldtag);
 	}
 
-	if (newtag == 0) {
-		emit_x(outfp, 0);
-	} else {
-		emit_x(outfp, newtag - oldnewtag);
-		oldnewtag = newtag;
+	if (size != 0) {
+		if (newtag == 0) {
+			emit_x(outfp, 0);
+		} else {
+			emit_x(outfp, newtag - oldnewtag);
+			oldnewtag = newtag;
+		}
 	}
 }
 
