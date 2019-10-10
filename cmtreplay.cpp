@@ -47,6 +47,16 @@
 #include <string.h>
 #include <unistd.h>
 
+#if 1
+#define	MALLOC(X)	malloc(X)
+#define	REALLOC(X, Y)	realloc(X, Y)
+#define	FREE(X)		free(X)
+#else
+#define	MALLOC(X)	0
+#define	REALLOC(X, Y)	0
+#define	FREE(X)		0
+#endif
+
 static bool vflag = false;
 static std::map<int, intptr_t> tag2ptr;
 
@@ -162,7 +172,7 @@ replay(FILE *infp)
 					errx(1, "cmt stream error: size == 0");
 
 				oldptr = tag_free(oldtag);
-				newptr = (intptr_t)realloc((void *)oldptr, size);
+				newptr = (intptr_t)REALLOC((void *)oldptr, size);
 				tag_alloc(newtag, newptr);
 
 				if (vflag)
@@ -171,7 +181,7 @@ replay(FILE *infp)
 				if (size == 0)
 					errx(1, "cmt stream error: size == 0");
 
-				newptr = (intptr_t)malloc(size);
+				newptr = (intptr_t)MALLOC(size);
 				tag_alloc(newtag, newptr);
 
 				if (vflag)
@@ -182,7 +192,7 @@ replay(FILE *infp)
 				errx(1, "cmt stream error: size != 0");
 
 			oldptr = tag_free(oldtag);
-			free((void *)oldptr);
+			FREE((void *)oldptr);
 
 			if (vflag)
 				printf("free(%lx<%d>)\n", oldptr, oldtag);
