@@ -73,41 +73,40 @@ parse_x(FILE *infp)
 {
 	size_t ret;
 	long long x;
-	unsigned char b;
 
-	ret = fread(&b, 1, 1, infp);
-	if (ret != 1) {
+	ret = getc_unlocked(infp);
+	if (ret == EOF) {
 		if (feof(infp))
 			return (-1);
 		err(1, "fread");
 	}
 
-	x = (b & 0x7f);
-	if (b & 0x80)
+	x = (ret & 0x7f);
+	if (ret & 0x80)
 		return (x);
 
-	ret = fread(&b, 1, 1, infp);
-	if (ret != 1)
+	ret = getc_unlocked(infp);
+	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((b & 0x7f) << 7);
-	if (b & 0x80)
+	x |= ((ret & 0x7f) << 7);
+	if (ret & 0x80)
 		return (x);
 
-	ret = fread(&b, 1, 1, infp);
-	if (ret != 1)
+	ret = getc_unlocked(infp);
+	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((b & 0x7f) << 14);
-	if (b & 0x80)
+	x |= ((ret & 0x7f) << 14);
+	if (ret & 0x80)
 		return (x);
 
-	ret = fread(&b, 1, 1, infp);
-	if (ret != 1)
+	ret = getc_unlocked(infp);
+	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((b & 0x7f) << 21);
-	if (b & 0x80)
+	x |= ((ret & 0x7f) << 21);
+	if (ret & 0x80)
 		return (x);
 
 	errx(1, "cmt stream error: unterminated x");
