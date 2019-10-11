@@ -56,7 +56,7 @@
 
 static bool sflag = false;
 static int next_tag = 1;
-static std::map<intptr_t, int> ptr2tag;
+static std::map<intptr_t, unsigned int> ptr2tag;
 
 static void
 usage(void)
@@ -67,7 +67,7 @@ usage(void)
 }
 
 static void
-emit_x(FILE *outfp, long long x)
+emit_x(FILE *outfp, unsigned int x)
 {
 	size_t written;
 	unsigned char b;
@@ -87,9 +87,9 @@ emit_x(FILE *outfp, long long x)
 }
 
 static void
-emit(FILE *outfp, int oldtag, size_t size, int newtag)
+emit(FILE *outfp, unsigned int oldtag, size_t size, unsigned int newtag)
 {
-	static int oldnewtag = 0;
+	static unsigned int oldnewtag = 0;
 
 	if (newtag == 0)
 		assert(size == 0);
@@ -114,10 +114,10 @@ emit(FILE *outfp, int oldtag, size_t size, int newtag)
 	}
 }
 
-static int
+static unsigned int
 tag_alloc(intptr_t newptr)
 {
-	int newtag;
+	unsigned int newtag;
 
 	newtag = next_tag;
 	next_tag++;
@@ -132,10 +132,10 @@ tag_alloc(intptr_t newptr)
 	return (newtag);
 }
 
-static int
+static unsigned int
 tag_free(intptr_t oldptr)
 {
-	int oldtag;
+	unsigned int oldtag;
 
 	auto oldpair = ptr2tag.find(oldptr);
 	if (oldpair == ptr2tag.end())
@@ -149,7 +149,7 @@ tag_free(intptr_t oldptr)
 static void
 emit_malloc(FILE *outfp, size_t size, intptr_t newptr)
 {
-	int newtag;
+	unsigned int newtag;
 
 	if (size == 0)
 		errx(1, "malloc with zero size");
@@ -166,7 +166,7 @@ emit_malloc(FILE *outfp, size_t size, intptr_t newptr)
 static void
 emit_free(FILE *outfp, intptr_t oldptr)
 {
-	int oldtag;
+	unsigned int oldtag;
 
 	oldtag = tag_free(oldptr);
 
@@ -180,7 +180,7 @@ emit_free(FILE *outfp, intptr_t oldptr)
 static void
 emit_realloc(FILE *outfp, intptr_t oldptr, size_t size, intptr_t newptr)
 {
-	int newtag, oldtag;
+	unsigned int newtag, oldtag;
 
 	if (size == 0)
 		errx(1, "realloc with zero size");

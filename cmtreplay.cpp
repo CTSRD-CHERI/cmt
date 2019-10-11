@@ -58,7 +58,7 @@
 #endif
 
 static bool vflag = false;
-static std::map<int, intptr_t> tag2ptr;
+static std::map<unsigned int, intptr_t> tag2ptr;
 
 static void
 usage(void)
@@ -68,11 +68,11 @@ usage(void)
 	exit(1);
 }
 
-static long long
+static unsigned int
 parse_x(FILE *infp)
 {
 	size_t ret;
-	long long x;
+	unsigned int x;
 
 	ret = getc_unlocked(infp);
 	if (ret == EOF) {
@@ -81,7 +81,7 @@ parse_x(FILE *infp)
 		err(1, "fread");
 	}
 
-	x = (ret & 0x7f);
+	x = ret & 0x7f;
 	if (ret & 0x80)
 		return (x);
 
@@ -89,7 +89,7 @@ parse_x(FILE *infp)
 	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((ret & 0x7f) << 7);
+	x |= (ret & 0x7f) << 7;
 	if (ret & 0x80)
 		return (x);
 
@@ -97,7 +97,7 @@ parse_x(FILE *infp)
 	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((ret & 0x7f) << 14);
+	x |= (ret & 0x7f) << 14;
 	if (ret & 0x80)
 		return (x);
 
@@ -105,7 +105,7 @@ parse_x(FILE *infp)
 	if (ret == EOF)
 		err(1, "fread");
 
-	x |= ((ret & 0x7f) << 21);
+	x |= (ret & 0x7f) << 21;
 	if (ret & 0x80)
 		return (x);
 
@@ -113,7 +113,7 @@ parse_x(FILE *infp)
 }
 
 static void
-tag_alloc(int newtag, intptr_t newptr)
+tag_alloc(unsigned int newtag, intptr_t newptr)
 {
 
 	auto inserted = tag2ptr.insert(std::make_pair(newtag, newptr));
@@ -122,7 +122,7 @@ tag_alloc(int newtag, intptr_t newptr)
 }
 
 static intptr_t
-tag_free(int oldtag)
+tag_free(unsigned int oldtag)
 {
 	intptr_t oldptr;
 
@@ -139,8 +139,8 @@ static void
 replay(FILE *infp)
 {
 	intptr_t newptr, oldptr;
-	static int oldnewtag = 0;
-	int newtag, oldtag, size;
+	static unsigned int oldnewtag = 0;
+	unsigned int newtag, oldtag, size;
 
 	for (;;) {
 		size = parse_x(infp);
