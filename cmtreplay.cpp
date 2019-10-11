@@ -39,7 +39,6 @@
   */
 
 #include <err.h>
-#include <map>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -47,18 +46,25 @@
 #include <string.h>
 #include <unistd.h>
 
+#define	MAXTAGS		100000000
+
 #if 1
 #define	MALLOC(X)	malloc(X)
 #define	REALLOC(X, Y)	realloc(X, Y)
 #define	FREE(X)		free(X)
 #else
-#define	MALLOC(X)	0
-#define	REALLOC(X, Y)	0
+static int meh = 1;
+#define	MALLOC(X)	meh++
+#define	REALLOC(X, Y)	meh++
 #define	FREE(X)		0
 #endif
 
 static bool vflag = false;
-static std::map<unsigned int, intptr_t> tag2ptr;
+static intptr_t tag2ptr[MAXTAGS];
+
+#ifndef nitems
+#define	nitems(x)	(sizeof((x)) / sizeof((x)[0]))
+#endif
 
 static void
 usage(void)
@@ -115,10 +121,13 @@ parse_x(FILE *infp)
 static void
 tag_alloc(unsigned int newtag, intptr_t newptr)
 {
+	if (newtag >= nitems(tag2ptr))
+		errx(1, "tag overflow; bump MAXTAGS and rebuild cmtreplay");
 
-	auto inserted = tag2ptr.insert(std::make_pair(newtag, newptr));
-	if (inserted.second == false)
-		errx(1, "already have tag %d as ptr %lx", newtag, newptr);
+	if (tag2ptr[newtag] != 0)
+		errx(1, "already have tag %d as ptr %lx", newtag, tag2ptr[newptr]);
+
+	tag2ptr[newtag] = newptr;
 }
 
 static intptr_t
@@ -126,11 +135,15 @@ tag_free(unsigned int oldtag)
 {
 	intptr_t oldptr;
 
-	auto oldpair = tag2ptr.find(oldtag);
-	if (oldpair == tag2ptr.end())
+	if (oldtag >= nitems(tag2ptr))
+		errx(1, "tag overflow; bump MAXTAGS and rebuild cmtreplay");
+
+	oldptr = tag2ptr[oldtag];
+
+	if (oldptr == 0)
 		errx(1, "no ptr for %d", oldtag);
-	oldptr = oldpair->second;
-	tag2ptr.erase(oldpair);
+
+	tag2ptr[oldtag] = 0;
 
 	return (oldptr);
 }
