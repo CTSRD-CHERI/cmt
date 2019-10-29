@@ -44,11 +44,14 @@ def do_line(l, lineno):
 		size = f[2]
 		oldptr = parse_ptr(f[1])
 		newptr = parse_ptr(f[3])
+		oldsize = sizes[oldptr]
+		oldallocated = lineno - allocated[oldptr]
+
 		sizes[newptr] = size
 		allocated[newptr] = lineno
 
 		#return "allocated at {}, {} lines ago".format(allocated[oldptr], lineno - allocated[oldptr])
-		return "{} bytes, allocated {} lines ago".format(sizes[oldptr], lineno - allocated[oldptr])
+		return "{} bytes, allocated {} lines ago".format(oldsize, oldallocated)
 
 	sys.exit("cannot parse line: \"{}\"".format(l))
 
