@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #
-# Turns output from "trace2cmt -s", eg:
+# Turns a trace, or the output from "trace2cmt -s", eg:
 #
 # malloc(8) = 81d220b48<6655>
 # realloc(81d220b48<6655>, 16) = 81d3b83a0<6656>
