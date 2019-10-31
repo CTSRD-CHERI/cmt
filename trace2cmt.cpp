@@ -35,12 +35,12 @@
   * The purpose of this thing is to convert the malloc traces,
   * which look like this:
   *
-  * call-trace	1536334807907427983	50a0805 14	malloc	96	81d21e160
-  * call-trace	1536334807907430218		free	81d2899c0	
-  * call-trace	1536334807907432412	50a07fa 14	malloc	20	81d2899c0
+  * malloc(456) = 0x800629000
+  * realloc(0x800610058, 17) = 0x800607440
+  * free(0x80062e000)
   *
   * ... into a compact form, about %10 of the original textual malloc
-  * trace, which can then be replayed using cmtreplay.
+  * logs, which can then be replayed using cmtreplay.
   *
   * Use the -s flag for a human-readable form.
   */
