@@ -197,33 +197,26 @@ emit_realloc(FILE *outfp, intptr_t oldptr, size_t size, intptr_t newptr)
 static void
 scan(const char *line, FILE *outfp)
 {
-	int matched, meh, size;
+	int matched, size;
 	intptr_t oldptr, newptr;
 
-	matched = sscanf(line, "call-trace %d %x %d malloc %d %lx\n", &meh, &meh, &meh, &size, &newptr);
-	if (matched == 5) {
+	matched = sscanf(line, "malloc(%d) = %lx\n", &size, &newptr);
+	if (matched == 2) {
 		emit_malloc(outfp, size, newptr);
 		return;
 	}
 
-	matched = sscanf(line, "call-trace %d free %lx\n", &size, &oldptr);
-	if (matched == 2) {
+	matched = sscanf(line, "free(%lx)\n", &oldptr);
+	if (matched == 1) {
 		emit_free(outfp, oldptr);
 		return;
 	}
 
-	matched = sscanf(line, "call-trace %d %x %d realloc %lx %d %lx\n", &meh, &meh, &meh, &oldptr, &size, &newptr);
-	if (matched == 6) {
+	matched = sscanf(line, "realloc(%lx, %d) = %lx\n", &oldptr, &size, &newptr);
+	if (matched == 3) {
 		emit_realloc(outfp, oldptr, size, newptr);
 		return;
 	}
-
-	matched = sscanf(line, "call-trace %d %x %d mmap\n", &meh, &meh, &meh);
-	if (matched == 3)
-		return;
-
-	if (strncmp(line, "call-trace", strlen("call-trace")) != 0)
-		return;
 
 	errx(1, "can't parse: %s", line);
 }

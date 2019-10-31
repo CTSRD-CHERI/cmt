@@ -24,7 +24,7 @@ def parse_ptr(l):
 	return int(re.split("[<>]+", l)[0], 16)
 
 def do_line(l, lineno):
-	f = re.split("[()= ]+", l)
+	f = re.split("[()=, ]+", l)
 	if f[0] == "malloc":
 		size = f[1]
 		ptr = parse_ptr(f[2])
