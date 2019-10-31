@@ -52,9 +52,19 @@
 #define	REALLOC(X, Y)	realloc(X, Y)
 #define	FREE(X)		free(X)
 #else
-static int meh = 1;
-#define	MALLOC(X)	meh++
-#define	REALLOC(X, Y)	meh++
+static uintptr_t ptr = 0xffff;
+
+void *
+MALLOC(size_t size)
+{
+	void *tmp;
+
+	tmp = (void *)ptr;
+	ptr += size;
+	return (tmp);
+}
+
+#define	REALLOC(X, Y)	MALLOC(Y)
 #define	FREE(X)		0
 #endif
 
