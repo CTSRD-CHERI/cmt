@@ -52,7 +52,7 @@
 #define	REALLOC(X, Y)	realloc(X, Y)
 #define	FREE(X)		free(X)
 #else
-static uintptr_t ptr = 0xffff;
+static uintptr_t ptr = 0x1 << 12;
 
 void *
 MALLOC(size_t size)
