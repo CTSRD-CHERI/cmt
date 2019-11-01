@@ -49,6 +49,12 @@ sizes = SortedDict()
 def parse_ptr(l):
 	return int(re.split("[<>]+", l)[0], 16)
 
+def atop(ptr):
+	return ptr >> 12
+
+def ptoa(page):
+	return page << 12
+
 def neighbours(ptr):
 	index = sizes.index(ptr)
 	size = sizes[ptr]
@@ -56,7 +62,6 @@ def neighbours(ptr):
 	if index > 0:
 		try:
 			prev_pointer, prev_size = sizes.peekitem(index - 1)
-			#print("prev {:x}, prev_size {}, end {:x}, ptr {:x}, gap {}".format(prev_pointer, prev_size, prev_pointer + prev_size, ptr, ptr - prev_pointer + prev_size))
 			assert prev_pointer < ptr
 			assert prev_pointer + prev_size <= ptr
 		except IndexError:
@@ -77,10 +82,13 @@ def neighbours(ptr):
 	return prev_pointer, prev_size, next_pointer, next_size
 
 def do_free(ptr, lineno):
+	assert ptr > 0
+
 	size = sizes[ptr]
 	age = lineno - allocated[ptr]
 
-	index = sizes.index(ptr)
+	first_page = atop(ptr)
+	last_page = atop(ptr + size - 1)
 
 	prev_pointer, prev_size, next_pointer, next_size = neighbours(ptr)
 
@@ -99,29 +107,47 @@ def do_free(ptr, lineno):
 	del allocated[ptr]
 	del sizes[ptr]
 
-	return "{} bytes, allocated {} lines ago, prev {:x}, gap {}, next {:x}, gap {}".format(size, age, prev_pointer, prev_gap, next_pointer, next_gap)
+	return "{} bytes, allocated {} lines ago, prev {:x}, gap {}, next {:x}, gap {}, pages [{}-{}]".format(size, age, prev_pointer, prev_gap, next_pointer, next_gap, first_page, last_page)
 
 def do_malloc(ptr, size, lineno):
+	assert ptr > 0
+	assert size > 0
 	assert ptr not in sizes
 	assert ptr not in allocated
+
 	sizes[ptr] = size
 	allocated[ptr] = lineno
 
+	first_page = atop(ptr)
+	last_page = atop(ptr + size - 1)
 	prev_pointer, prev_size, next_pointer, next_size = neighbours(ptr)
+
+	more_pages = last_page - first_page + 1
 
 	if prev_pointer:
 		prev_gap = ptr - prev_pointer - prev_size
+		prev_page = atop(prev_pointer + prev_size - 1)
+		assert ptoa(prev_page) < ptr
+		if prev_page == first_page:
+			more_pages = more_pages - 1
 	else:
 		prev_pointer = 0
 		prev_gap = -1
+		prev_page = -1
 
 	if next_pointer:
 		next_gap = next_pointer - ptr - size
+		next_page = atop(next_pointer)
+		if first_page != last_page and last_page == next_page:
+			more_pages = more_pages - 1
 	else:
 		next_pointer = 0
 		next_gap = -1
+		next_page = -1
 
-	return "prev {:x}, gap {}, next {:x}, gap {}".format(prev_pointer, prev_gap, next_pointer, next_gap)
+	assert more_pages >= 0
+	#return "prev {:x}, gap {}, last page {}, next {:x}, gap {}, first page {}, pages [{}, {}], {} more pages ".format(prev_pointer, prev_gap, prev_page, next_pointer, next_gap, next_page, first_page, last_page, more_pages)
+	return "prev {:x}, gap {}, next {:x}, gap {}, pages [{}, {}], {} more pages ".format(prev_pointer, prev_gap, next_pointer, next_gap, first_page, last_page, more_pages)
 
 def do_line(l, lineno):
 	f = re.split("[()=, ]+", l)
