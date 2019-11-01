@@ -89,25 +89,36 @@ def do_free(ptr, lineno):
 
 	first_page = atop(ptr)
 	last_page = atop(ptr + size - 1)
+	less_pages = last_page - first_page + 1
 
 	prev_pointer, prev_size, next_pointer, next_size = neighbours(ptr)
 
 	if prev_pointer:
 		prev_gap = ptr - prev_pointer - prev_size
+		prev_page = atop(prev_pointer + prev_size - 1)
+		if prev_page == first_page:
+			less_pages = less_pages - 1
 	else:
 		prev_pointer = 0
 		prev_gap = -1
+		prev_page = -1
 
 	if next_pointer:
 		next_gap = next_pointer - ptr - size
+		next_page = atop(next_pointer)
+		if less_pages > 0 and last_page == next_page:
+			less_pages = less_pages - 1
 	else:
 		next_pointer = 0
 		next_gap = -1
+		next_page = -1
 
 	del allocated[ptr]
 	del sizes[ptr]
 
-	return "{} bytes, allocated {} lines ago, prev {:x}, gap {}, next {:x}, gap {}, pages [{}-{}]".format(size, age, prev_pointer, prev_gap, next_pointer, next_gap, first_page, last_page)
+	assert less_pages >= 0
+	return "{} bytes, allocated {} lines ago, prev {:x}, gap {}, prev page {}, next {:x}, gap {}, next page {}, pages [{}-{}], {} fewer pages".format(size, age, prev_pointer, prev_gap, prev_page, next_pointer, next_gap, next_page, first_page, last_page, less_pages)
+	#return "{} bytes, allocated {} lines ago, prev {:x}, gap {}, next {:x}, gap {}, pages [{}-{}], {} fewer pages".format(size, age, prev_pointer, prev_gap, next_pointer, next_gap, first_page, last_page, less_pages)
 
 def do_malloc(ptr, size, lineno):
 	assert ptr > 0
@@ -120,9 +131,9 @@ def do_malloc(ptr, size, lineno):
 
 	first_page = atop(ptr)
 	last_page = atop(ptr + size - 1)
-	prev_pointer, prev_size, next_pointer, next_size = neighbours(ptr)
-
 	more_pages = last_page - first_page + 1
+
+	prev_pointer, prev_size, next_pointer, next_size = neighbours(ptr)
 
 	if prev_pointer:
 		prev_gap = ptr - prev_pointer - prev_size
@@ -138,7 +149,7 @@ def do_malloc(ptr, size, lineno):
 	if next_pointer:
 		next_gap = next_pointer - ptr - size
 		next_page = atop(next_pointer)
-		if first_page != last_page and last_page == next_page:
+		if less_pages > 0 and last_page == next_page:
 			more_pages = more_pages - 1
 	else:
 		next_pointer = 0
@@ -146,7 +157,7 @@ def do_malloc(ptr, size, lineno):
 		next_page = -1
 
 	assert more_pages >= 0
-	#return "prev {:x}, gap {}, last page {}, next {:x}, gap {}, first page {}, pages [{}, {}], {} more pages ".format(prev_pointer, prev_gap, prev_page, next_pointer, next_gap, next_page, first_page, last_page, more_pages)
+	#return "prev {:x}, gap {}, prev page {}, next {:x}, gap {}, next page {}, pages [{}, {}], {} more pages ".format(prev_pointer, prev_gap, prev_page, next_pointer, next_gap, next_page, first_page, last_page, more_pages)
 	return "prev {:x}, gap {}, next {:x}, gap {}, pages [{}, {}], {} more pages ".format(prev_pointer, prev_gap, next_pointer, next_gap, first_page, last_page, more_pages)
 
 def do_line(l, lineno):
