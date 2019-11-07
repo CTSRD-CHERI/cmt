@@ -26,7 +26,7 @@ realloc(81d220b48<6655>, 16) = 81d3b83a0<6656>    # 8 bytes, allocated 1 lines a
 free(81d3b83a0<6656>)                             # 16 bytes, allocated 1 lines ago
 ```
 
-The `overhead.py` utility will annotate traces with information on memory layout, eg:
+The `overhead.py` utility will annotate traces with information on memory layout, and changes to the working set, eg:
 ```
 malloc(20) = 81d2899a0<8>                         # prev 81d289980, gap 0, next 81d28ba20, gap 8300, pages [8508041, 8508041], 0 more pages 
 malloc(96) = 81d21e100<9>                         # prev 81d21e040, gap 104, next 81d220238, gap 8408, pages [8507934, 8507934], 0 more pages 

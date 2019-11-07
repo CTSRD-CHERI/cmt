@@ -20,20 +20,20 @@
 #
 # ... into this:
 #
-# malloc(17) = 81d3bd6c0<6385>                      # prev 81d3bd6a0, gap 12, next 81de0d000, gap 10811695
-# malloc(7) = 81d220b40<6386>                       # prev 81d220b38, gap 0, next 81d221700, gap 3001
-# malloc(18) = 81d3bd6e0<6387>                      # prev 81d3bd6c0, gap 15, next 81de0d000, gap 10811662
-# malloc(12) = 81d3b8590<6388>                      # prev 81d3b8580, gap 0, next 81d3ba200, gap 7268
-# malloc(27) = 81d3bd700<6389>                      # prev 81d3bd6e0, gap 14, next 81de0d000, gap 10811621
-# malloc(256) = 81d360600<6390>                     # prev 81d360300, gap 512, next 81d363800, gap 12544
-# realloc(81d360600<6390>, 512) = 81d3b9800<6391>   # 256 bytes, allocated 1 lines ago, prev 81d360300, gap 512, next 81d363800, gap 12544
-# realloc(81d3b9800<6391>, 1024) = 81d3bbc00<6392>  # 512 bytes, allocated 1 lines ago, prev 81d3b8590, gap 4708, next 81d3ba200, gap 2048
-# free(81d220b28<6306>)                             # 6 bytes, allocated 87 lines ago, prev 81d220b20, gap 1, next 81d220b30, gap 2
-# free(81d3b83b0<6307>)                             # 9 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 4, next 81d3b83c0, gap 7
-# free(81d3b83c0<6308>)                             # 10 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 20, next 81d3b83d0, gap 6
-# free(81d3b83d0<6309>)                             # 16 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 36, next 81d3b83e0, gap 0
-# free(81d3bd100<6310>)                             # 18 bytes, allocated 87 lines ago, prev 81d3bd0e0, gap 0, next 81d3bd120, gap 14
-# free(81d3bd120<6311>)                             # 17 bytes, allocated 87 lines ago, prev 81d3bd0e0, gap 32, next 81d3bd140, gap 15
+# malloc(17) = 81d3bd6c0<6385>                      # prev 81d3bd6a0, gap 12, next 81de0d000, gap 10811695, pages [8508349, 8508349], 0 more pages 
+# malloc(7) = 81d220b40<6386>                       # prev 81d220b38, gap 0, next 81d221700, gap 3001, pages [8507936, 8507936], 0 more pages 
+# malloc(18) = 81d3bd6e0<6387>                      # prev 81d3bd6c0, gap 15, next 81de0d000, gap 10811662, pages [8508349, 8508349], 0 more pages 
+# malloc(12) = 81d3b8590<6388>                      # prev 81d3b8580, gap 0, next 81d3ba200, gap 7268, pages [8508344, 8508344], 0 more pages 
+# malloc(27) = 81d3bd700<6389>                      # prev 81d3bd6e0, gap 14, next 81de0d000, gap 10811621, pages [8508349, 8508349], 0 more pages 
+# malloc(256) = 81d360600<6390>                     # prev 81d360300, gap 512, next 81d363800, gap 12544, pages [8508256, 8508256], 0 more pages 
+# realloc(81d360600<6390>, 512) = 81d3b9800<6391>   # 256 bytes, allocated 1 lines ago, prev 81d360300, gap 512, next 81d363800, gap 12544, pages [8508256-8508256], 0 fewer pages
+# realloc(81d3b9800<6391>, 1024) = 81d3bbc00<6392>  # 512 bytes, allocated 1 lines ago, prev 81d3b8590, gap 4708, next 81d3ba200, gap 2048, pages [8508345-8508345], 1 fewer pages
+# free(81d220b28<6306>)                             # 6 bytes, allocated 87 lines ago, prev 81d220b20, gap 1, next 81d220b30, gap 2, pages [8507936-8507936], 0 fewer pages
+# free(81d3b83b0<6307>)                             # 9 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 4, next 81d3b83c0, gap 7, pages [8508344-8508344], 0 fewer pages
+# free(81d3b83c0<6308>)                             # 10 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 20, next 81d3b83d0, gap 6, pages [8508344-8508344], 0 fewer pages
+# free(81d3b83d0<6309>)                             # 16 bytes, allocated 87 lines ago, prev 81d3b83a0, gap 36, next 81d3b83e0, gap 0, pages [8508344-8508344], 0 fewer pages
+# free(81d3bd100<6310>)                             # 18 bytes, allocated 87 lines ago, prev 81d3bd0e0, gap 0, next 81d3bd120, gap 14, pages [8508349-8508349], 0 fewer pages
+# free(81d3bd120<6311>)                             # 17 bytes, allocated 87 lines ago, prev 81d3bd0e0, gap 32, next 81d3bd140, gap 15, pages [8508349-8508349], 0 fewer pages
 # 
 
 import re
