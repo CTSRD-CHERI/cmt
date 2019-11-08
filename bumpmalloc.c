@@ -136,7 +136,7 @@ free(void *tmp)
 }
 
 static void __attribute__ ((constructor))
-stats_constructor(void)
+bumpmalloc_init(void)
 {
 
 	ptr = (uintptr_t)mmap(0, 1 * 1024 * 1024 * 1024,
