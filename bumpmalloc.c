@@ -64,7 +64,18 @@ struct utrace_malloc {
 static uintptr_t ptr;
 static bool do_utrace;
 
-void *
+static void
+log_utrace(void *p, size_t s, void *r)
+{
+	struct utrace_malloc ut;
+
+	ut.p = p;
+	ut.s = s;
+	ut.r = r;
+	utrace(&ut, sizeof(ut));
+}
+
+static void *
 malloc_nolog(size_t size)
 {
 	void *tmp;
@@ -78,17 +89,12 @@ malloc_nolog(size_t size)
 void *
 malloc(size_t size)
 {
-	struct utrace_malloc ut;
 	void *tmp;
 
 	tmp = malloc_nolog(size);
 
-	if (do_utrace) {
-		ut.p = NULL;
-		ut.s = size;
-		ut.r = tmp;
-		utrace(&ut, sizeof(ut));
-	}
+	if (__predict_false(do_utrace))
+		log_utrace(NULL, size, tmp);
 
 	return (tmp);
 }
@@ -107,7 +113,6 @@ calloc(size_t number, size_t size)
 void *
 realloc(void *tmp, size_t size)
 {
-	struct utrace_malloc ut;
 	void *newptr;
 
 	newptr = malloc_nolog(size);
@@ -116,12 +121,8 @@ realloc(void *tmp, size_t size)
 	if (tmp != NULL)
 		memmove(newptr, tmp, size);
 
-	if (do_utrace) {
-		ut.p = tmp;
-		ut.s = size;
-		ut.r = newptr;
-		utrace(&ut, sizeof(ut));
-	}
+	if (__predict_false(do_utrace))
+		log_utrace(tmp, size, newptr);
 
 	return (newptr);
 }
@@ -129,14 +130,9 @@ realloc(void *tmp, size_t size)
 void
 free(void *tmp)
 {
-	struct utrace_malloc ut;
 
-	if (do_utrace) {
-		ut.p = tmp;
-		ut.s = 0;
-		ut.r = NULL;
-		utrace(&ut, sizeof(ut));
-	}
+	if (__predict_false(do_utrace))
+		log_utrace(tmp, 0, NULL);
 }
 
 static void __attribute__ ((constructor))
