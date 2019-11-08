@@ -143,7 +143,7 @@ stats_constructor(void)
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_ALIGNED_SUPER | MAP_ANON | MAP_PRIVATE | MAP_NOCORE, -1, 0);
 	if ((void *)ptr == MAP_FAILED) {
-		fprintf(stderr, "mmap: %s", strerror(errno));
+		fprintf(stderr, "mmap: %s\n", strerror(errno));
 		exit (-1);
 	}
 
