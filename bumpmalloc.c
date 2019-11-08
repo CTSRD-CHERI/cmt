@@ -39,7 +39,7 @@
  * $ run-your-app
  *
  * You can set the BUMPMALLOC_UTRACE environment variable to log using
- * utrace(2), to use with 'ktrace -t u'.
+ * utrace(2), for use with 'ktrace -t u'.
  */
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ struct utrace_malloc {
 	void *r;
 };
 
-static uintptr_t ptr;
+static void *arena;
 static bool do_utrace;
 
 static void
@@ -78,71 +78,73 @@ log_utrace(void *p, size_t s, void *r)
 static void *
 malloc_nolog(size_t size)
 {
-	void *tmp;
+	void *ptr;
 
-	tmp = (void *)ptr;
-	ptr += roundup2(size, 8);
+	ptr = arena;
+	arena = (void *)((uintptr_t)arena + roundup2(size, 8));
 
-	return (tmp);
+	return (ptr);
 }
 
 void *
 malloc(size_t size)
 {
-	void *tmp;
+	void *ptr;
 
-	tmp = malloc_nolog(size);
+	ptr = malloc_nolog(size);
 
 	if (__predict_false(do_utrace))
-		log_utrace(NULL, size, tmp);
+		log_utrace(NULL, size, ptr);
 
-	return (tmp);
+	return (ptr);
 }
 
 void *
 calloc(size_t number, size_t size)
 {
-	void *tmp;
+	void *ptr;
 
-	tmp = malloc(number * size);
-	memset(tmp, 0, number * size);
+	ptr = malloc(number * size);
+	memset(ptr, 0, number * size);
 
-	return (tmp);
+	return (ptr);
 }
 
 void *
-realloc(void *tmp, size_t size)
+realloc(void *ptr, size_t size)
 {
 	void *newptr;
 
 	newptr = malloc_nolog(size);
 
 	// Surprisingly, this is actually correct.
-	if (tmp != NULL)
-		memmove(newptr, tmp, size);
+	if (ptr != NULL)
+		memmove(newptr, ptr, size);
 
 	if (__predict_false(do_utrace))
-		log_utrace(tmp, size, newptr);
+		log_utrace(ptr, size, newptr);
 
 	return (newptr);
 }
 
 void
-free(void *tmp)
+free(void *ptr)
 {
 
 	if (__predict_false(do_utrace))
-		log_utrace(tmp, 0, NULL);
+		log_utrace(ptr, 0, NULL);
 }
 
 static void __attribute__ ((constructor))
 bumpmalloc_init(void)
 {
 
-	ptr = (uintptr_t)mmap(0, 1 * 1024 * 1024 * 1024,
+	//fprintf(stderr, "%s: go, arena %p\n", __func__, &arena);
+
+	arena = mmap(0, 1 * 1024 * 1024 * 1024,
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_ALIGNED_SUPER | MAP_ANON | MAP_PRIVATE | MAP_NOCORE, -1, 0);
-	if ((void *)ptr == MAP_FAILED) {
+	if (arena == MAP_FAILED) {
 		fprintf(stderr, "mmap: %s\n", strerror(errno));
 		exit (-1);
 	}
