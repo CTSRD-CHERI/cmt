@@ -111,8 +111,10 @@ realloc(void *tmp, size_t size)
 	void *newptr;
 
 	newptr = malloc_nolog(size);
-	if (tmp != NULL) // It's not _too_ wrong in most cases.
-		memcpy(newptr, tmp, size);
+
+	// Surprisingly, this is actually correct.
+	if (tmp != NULL)
+		memmove(newptr, tmp, size);
 
 	if (do_utrace) {
 		ut.p = tmp;
