@@ -54,6 +54,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#define	ARENA_SIZE (8L * 1024 * 1024 * 1024)
+
+#define	OUT_OF_SPACE "bumpmalloc: out of space\n"
+#define	MMAP_FAILED "bumpmalloc: mmap failed\n"
 
 struct utrace_malloc {
 	void *p;
@@ -62,6 +68,7 @@ struct utrace_malloc {
 };
 
 static void *arena;
+static void *arena_start;
 static bool do_utrace;
 
 static void
@@ -82,6 +89,11 @@ malloc_nolog(size_t size)
 
 	ptr = arena;
 	arena = (void *)((uintptr_t)arena + roundup2(size, 8));
+
+	if (__predict_false(arena >= arena_start + ARENA_SIZE)) {
+		write(2, OUT_OF_SPACE, sizeof(OUT_OF_SPACE));
+		return (NULL);
+	}
 
 	return (ptr);
 }
@@ -105,7 +117,8 @@ calloc(size_t number, size_t size)
 	void *ptr;
 
 	ptr = malloc(number * size);
-	memset(ptr, 0, number * size);
+	if (__predict_true(ptr != NULL))
+		memset(ptr, 0, number * size);
 
 	return (ptr);
 }
@@ -118,7 +131,7 @@ realloc(void *ptr, size_t size)
 	newptr = malloc_nolog(size);
 
 	// Surprisingly, this is actually correct.
-	if (ptr != NULL)
+	if (ptr != NULL && newptr != NULL)
 		memmove(newptr, ptr, size);
 
 	if (__predict_false(do_utrace))
@@ -141,11 +154,11 @@ bumpmalloc_init(void)
 
 	//fprintf(stderr, "%s: go, arena %p\n", __func__, &arena);
 
-	arena = mmap(0, 1 * 1024 * 1024 * 1024,
+	arena_start = arena = mmap(0, ARENA_SIZE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_ALIGNED_SUPER | MAP_ANON | MAP_PRIVATE | MAP_NOCORE, -1, 0);
 	if (arena == MAP_FAILED) {
-		fprintf(stderr, "mmap: %s\n", strerror(errno));
+		write(2, MMAP_FAILED, sizeof(MMAP_FAILED));
 		exit (-1);
 	}
 
