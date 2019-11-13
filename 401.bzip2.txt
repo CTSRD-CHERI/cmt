@@ -1,0 +1,53 @@
+malloc(4096) = 0x800e00000
+malloc(294649856) = 0x800e01000
+malloc(294649856) = 0x812701000
+malloc(294649856) = 0x824001000
+malloc(286720) = 0x835901000
+malloc(5104) = 0x835947000
+malloc(55768) = 0x8359483f0
+malloc(2000000) = 0x835955dc8
+malloc(2000136) = 0x835b3e248
+malloc(262148) = 0x835d26750
+free(0x835955dc8)
+free(0x835b3e248)
+free(0x835d26750)
+free(0x8359483f0)
+free(0x835947000)
+malloc(5104) = 0x835d66758
+malloc(64144) = 0x835d67b48
+malloc(2000000) = 0x835d775d8
+free(0x835d775d8)
+free(0x835d67b48)
+free(0x835d66758)
+malloc(5104) = 0x835f5fa58
+malloc(55768) = 0x835f60e48
+malloc(2800000) = 0x835f6e820
+malloc(2800136) = 0x83621a1a0
+malloc(262148) = 0x8364c5ba8
+free(0x835f6e820)
+free(0x83621a1a0)
+free(0x8364c5ba8)
+free(0x835f60e48)
+free(0x835f5fa58)
+malloc(5104) = 0x836505bb0
+malloc(64144) = 0x836506fa0
+malloc(2800000) = 0x836516a30
+free(0x836516a30)
+free(0x836506fa0)
+free(0x836505bb0)
+malloc(5104) = 0x8367c23b0
+malloc(55768) = 0x8367c37a0
+malloc(3600000) = 0x8367d1178
+malloc(3600136) = 0x836b3fff8
+malloc(262148) = 0x836eaef00
+free(0x8367d1178)
+free(0x836b3fff8)
+free(0x836eaef00)
+free(0x8367c37a0)
+free(0x8367c23b0)
+malloc(5104) = 0x836eeef08
+malloc(64144) = 0x836ef02f8
+malloc(3600000) = 0x836effd88
+free(0x836effd88)
+free(0x836ef02f8)
+free(0x836eeef08)
